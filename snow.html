@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Pet Snowglobe</title>
+
+  <style>
+    :root {
+      --sky: #9edcff;
+      --ground: #eaf8ff;
+      --glass: rgba(255, 255, 255, 0.28);
+      --ink: #263452;
+      --pink: #ff8fab;
+      --purple: #8d7dff;
+      --yellow: #ffd166;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: "Courier New", monospace;
+      background:
+        radial-gradient(circle at 20% 20%, #fff 0 2px, transparent 3px),
+        linear-gradient(135deg, #d9c8ff, #8bd5ff);
+      background-size: 90px 90px, auto;
+    }
+
+    .app {
+      width: min(94vw, 620px);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      text-shadow: 3px 3px #fff;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      font-size: 0.8rem;
+    }
+
+    .globe {
+      position: relative;
+      width: min(88vw, 500px);
+      aspect-ratio: 1;
+      margin: auto;
+      overflow: hidden;
+      border: 10px solid #fff;
+      border-radius: 50%;
+      background: linear-gradient(var(--sky) 0 67%, var(--ground) 67%);
+      box-shadow:
+        inset -25px -20px 50px rgba(44, 75, 137, 0.2),
+        0 18px 0 #826bb7,
+        0 25px 35px rgba(42, 38, 89, 0.35);
+    }
+
+    .globe::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: 50%;
+      box-shadow: inset 25px 15px 35px rgba(255, 255, 255, 0.65);
+    }
+
+    .moon {
+      position: absolute;
+      top: 12%;
+      right: 19%;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #fff5bd;
+      box-shadow: 0 0 18px #fff5bd;
+    }
+
+    .tree {
+      position: absolute;
+      bottom: 30%;
+      left: 13%;
+      width: 0;
+      height: 0;
+      border-left: 38px solid transparent;
+      border-right: 38px solid transparent;
+      border-bottom: 105px solid #5b9b83;
+      filter: drop-shadow(3px 4px 0 #447568);
+    }
+
+    .tree::after {
+      content: "";
+      position: absolute;
+      left: -5px;
+      top: 95px;
+      width: 10px;
+      height: 35px;
+      background: #765740;
+    }
+
+    .ground {
+      position: absolute;
+      z-index: 2;
+      bottom: -30px;
+      left: -5%;
+      width: 110%;
+      height: 34%;
+      border-radius: 50% 50% 0 0;
+      background: #f7fdff;
+      box-shadow: inset 0 12px 0 rgba(180, 222, 240, 0.45);
+    }
+
+    .pet {
+      position: absolute;
+      z-index: 4;
+      left: 50%;
+      bottom: 24%;
+      width: 116px;
+      height: 106px;
+      transform: translateX(-50%);
+      border: 5px solid #332b54;
+      border-radius: 48% 48% 42% 42%;
+      background: var(--pet-color, #ffc6d9);
+      box-shadow: inset -10px -8px rgba(185, 103, 155, 0.22);
+      transition: 0.25s;
+    }
+
+    .pet::before,
+    .pet::after {
+      content: "";
+      position: absolute;
+      top: -28px;
+      width: 38px;
+      height: 45px;
+      border: 5px solid #332b54;
+      background: inherit;
+    }
+
+    .pet::before {
+      left: -4px;
+      transform: rotate(-28deg);
+      border-radius: 70% 20% 20% 20%;
+    }
+
+    .pet::after {
+      right: -4px;
+      transform: rotate(28deg);
+      border-radius: 20% 70% 20% 20%;
+    }
+
+    .eyes {
+      position: absolute;
+      top: 35px;
+      left: 22px;
+      right: 22px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .mouth {
+      position: absolute;
+      left: 50%;
+      top: 63px;
+      width: 18px;
+      height: 10px;
+      transform: translateX(-50%);
+      border-bottom: 4px solid #332b54;
+      border-radius: 50%;
+    }
+
+    .outfit {
+      position: absolute;
+      z-index: 5;
+      left: 50%;
+      bottom: -13px;
+      width: 92px;
+      height: 38px;
+      transform: translateX(-50%);
+      border: 5px solid #332b54;
+      border-radius: 50% 50% 25% 25%;
+      background: var(--outfit, #8d7dff);
+    }
+
+    .pet.sleeping .eyes {
+      font-size: 0;
+    }
+
+    .pet.sleeping .eyes::before,
+    .pet.sleeping .eyes::after {
+      content: "—";
+      font-size: 22px;
+    }
+
+    .pet.dizzy {
+      animation: dizzy 0.28s infinite alternate;
+    }
+
+    .pet.dizzy .eyes::before {
+      content: "×";
+    }
+
+    .pet.dizzy .eyes::after {
+      content: "×";
+    }
+
+    .pet.dizzy .eyes {
+      font-size: 0;
+    }
+
+    .pet.eating {
+      animation: eat 0.35s infinite alternate;
+    }
+
+    .pet.eating .mouth {
+      height: 18px;
+      border: 4px solid #332b54;
+      background: #fff;
+    }
+
+    @keyframes dizzy {
+      from { transform: translateX(-54%) rotate(-7deg); }
+      to { transform: translateX(-46%) rotate(7deg); }
+    }
+
+    @keyframes eat {
+      from { transform: translateX(-50%) translateY(0); }
+      to { transform: translateX(-50%) translateY(-8px); }
+    }
+
+    .flake,
+    .confetti {
+      position: absolute;
+      z-index: 3;
+      top: -20px;
+      width: 9px;
+      height: 9px;
+      animation: fall linear forwards;
+      pointer-events: none;
+    }
+
+    .flake {
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 0 5px white;
+    }
+
+    .confetti {
+      width: 8px;
+      height: 16px;
+      background: var(--color);
+      transform: rotate(25deg);
+    }
+
+    @keyframes fall {
+      to {
+        top: 105%;
+        transform: translateX(var(--drift)) rotate(420deg);
+      }
+    }
+
+    .snow-blanket {
+      position: absolute;
+      z-index: 6;
+      left: 50%;
+      bottom: 22%;
+      width: 90px;
+      height: var(--snow, 0px);
+      transform: translateX(-50%);
+      border-radius: 50% 50% 10px 10px;
+      background: white;
+      opacity: 0.9;
+      pointer-events: none;
+      transition: height 0.8s;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 9px;
+      margin: 32px auto 12px;
+    }
+
+    button {
+      border: 3px solid var(--ink);
+      border-radius: 12px;
+      padding: 10px 13px;
+      color: var(--ink);
+      background: #fff;
+      box-shadow: 0 4px 0 var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--ink);
+    }
+
+    .status {
+      min-height: 22px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .keys {
+      opacity: 0.75;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <h1>❄️ Pixel Pet Snowglobe</h1>
+    <p class="subtitle">A tiny living world inside a dome</p>
+
+    <section class="globe" id="globe" aria-label="Interactive pixel pet snowglobe">
+      <div class="moon"></div>
+      <div class="tree"></div>
+      <div class="ground"></div>
+
+      <div class="snow-blanket" id="snowBlanket"></div>
+
+      <div class="pet" id="pet">
+        <div class="eyes">
+          <span>•</span>
+          <span>•</span>
+        </div>
+        <div class="mouth"></div>
+        <div class="outfit" id="outfit"></div>
+      </div>
+    </section>
+
+    <div class="controls">
+      <button onclick="feedPet()">🍪 Feed <small>[F]</small></button>
+      <button onclick="changeWeather()">🎉 Weather <small>[W]</small></button>
+      <button onclick="changeOutfit()">👕 Outfit <small>[O]</small></button>
+      <button onclick="shakeGlobe()">🌀 Shake <small>[S]</small></button>
+      <button onclick="wakePet()">☀️ Wake <small>[Space]</small></button>
+    </div>
+
+    <div class="status" id="status">Your pet is enjoying the snow.</div>
+    <div class="keys">Keyboard: F feed · W weather · O outfit · S shake · Space wake</div>
+  </main>
+
+  <script>
+    const globe = document.getElementById("globe");
+    const pet = document.getElementById("pet");
+    const outfit = document.getElementById("outfit");
+    const statusText = document.getElementById("status");
+    const snowBlanket = document.getElementById("snowBlanket");
+
+    const petColors = ["#ffc6d9", "#b7e4c7", "#bde0fe", "#ffe5a5"];
+    const outfitColors = ["#8d7dff", "#ff8fab", "#56c596", "#ffb347"];
+
+    let weather = "snow";
+    let outfitIndex = 0;
+    let snowHeight = 0;
+    let idleTimer;
+    let weatherTimer;
+
+    function setStatus(message) {
+      statusText.textContent = message;
+    }
+
+    function setPetState(state, duration = 1500) {
+      pet.classList.remove("eating", "dizzy", "sleeping");
+
+      if (state) {
+        pet.classList.add(state);
+      }
+
+      if (duration) {
+        clearTimeout(pet.stateTimer);
+        pet.stateTimer = setTimeout(() => {
+          pet.classList.remove(state);
+        }, duration);
+      }
+    }
+
+    function makeParticle(type = weather) {
+      const particle = document.createElement("span");
+      particle.className = type === "confetti" ? "confetti" : "flake";
+
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.animationDuration = `${2 + Math.random() * 3}s`;
+      particle.style.setProperty("--drift", `${-45 + Math.random() * 90}px`);
+
+      if (type === "confetti") {
+        const colors = ["#ff8fab", "#ffd166", "#8d7dff", "#56c596"];
+        particle.style.setProperty(
+          "--color",
+          colors[Math.floor(Math.random() * colors.length)]
+        );
+      }
+
+      globe.appendChild(particle);
+      particle.addEventListener("animationend", () => particle.remove());
+    }
+
+    function feedPet() {
+      wakePet(false);
+      setPetState("eating");
+      setStatus("Yum! Your pixel pet is eating the falling flakes.");
+
+      for (let i = 0; i < 9; i++) {
+        setTimeout(() => makeParticle("flake"), i * 100);
+      }
+
+      resetIdleTimer();
+    }
+
+    function changeWeather() {
+      weather = weather === "snow" ? "confetti" : "snow";
+
+      if (weather === "confetti") {
+        setStatus("Confetti storm activated! 🎉");
+        for (let i = 0; i < 30; i++) {
+          setTimeout(() => makeParticle("confetti"), i * 65);
+        }
+      } else {
+        setStatus("The sky is snowing again. ❄️");
+      }
+
+      clearInterval(weatherTimer);
+      weatherTimer = setInterval(() => makeParticle(weather), 650);
+      resetIdleTimer();
+    }
+
+    function changeOutfit() {
+      outfitIndex = (outfitIndex + 1) % outfitColors.length;
+      outfit.style.setProperty("--outfit", outfitColors[outfitIndex]);
+
+      pet.style.setProperty(
+        "--pet-color",
+        petColors[outfitIndex]
+      );
+
+      setStatus("New outfit equipped!");
+      resetIdleTimer();
+    }
+
+    function shakeGlobe() {
+      setPetState("dizzy", 2200);
+      setStatus("Whoa! Your pet is dizzy from the shake.");
+
+      globe.animate(
+        [
+          { transform: "rotate(0deg)" },
+          { transform: "rotate(-3deg)" },
+          { transform: "rotate(3deg)" },
+          { transform: "rotate(-2deg)" },
+          { transform: "rotate(0deg)" }
+        ],
+        { duration: 500, iterations: 2 }
+      );
+
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => makeParticle(weather), i * 45);
+      }
+
+      resetIdleTimer();
+    }
+
+    function wakePet(showMessage = true) {
+      pet.classList.remove("sleeping");
+
+      if (showMessage) {
+        setStatus("Your pet woke up!");
+      }
+
+      snowHeight = 0;
+      snowBlanket.style.setProperty("--snow", "0px");
+      resetIdleTimer();
+    }
+
+    function putPetToSleep() {
+      setPetState("sleeping", 0);
+      setStatus("Your pet fell asleep. Snow is slowly covering them...");
+
+      snowHeight = Math.min(snowHeight + 8, 62);
+      snowBlanket.style.setProperty("--snow", `${snowHeight}px`);
+    }
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(putPetToSleep, 7000);
+    }
+
+    document.addEventListener("keydown", event => {
+      if (event.key.toLowerCase() === "f") feedPet();
+      if (event.key.toLowerCase() === "w") changeWeather();
+      if (event.key.toLowerCase() === "o") changeOutfit();
+      if (event.key.toLowerCase() === "s") shakeGlobe();
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        wakePet();
+      }
+    });
+
+    // Start the ambient snowfall.
+    weatherTimer = setInterval(() => makeParticle(weather), 650);
+    resetIdleTimer();
+  </script>
+</body>
+</html>
